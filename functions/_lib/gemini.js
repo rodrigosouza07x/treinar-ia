@@ -1,6 +1,22 @@
 // ==============================================================================
-// CLIENTE GEMINI API COM STREAMING SSE E GOOGLE SEARCH GROUNDING
+// CLIENTE GEMINI API COM STREAMING SSE, MODELOS RESERVA E BUSCA WEB OPCIONAL
 // ==============================================================================
+//
+// Variáveis de ambiente usadas (todas opcionais, menos a chave):
+//   GEMINI_API_KEY          (segredo, obrigatória)
+//   GEMINI_MODEL            modelo principal (padrão: gemini-3.8-flash)
+//   GEMINI_FALLBACK_MODELS  modelos reserva separados por vírgula
+//   ENABLE_SEARCH           "true" liga a busca na web (padrão: desligada)
+// ==============================================================================
+
+const MODELOS_RESERVA_PADRAO =
+  'gemini-3.6-flash,gemini-3.5-flash,gemini-3.1-flash-lite,gemini-flash-latest';
+
+const NOTA_SEM_BUSCA =
+  '\n\n# AVISO DO SISTEMA\n' +
+  'A busca na web está DESATIVADA nesta versão. Não afirme ter pesquisado na internet nem cite fontes online. ' +
+  'Responda com a base de conhecimento e seu conhecimento geral. Quando algo depender de dado atual ' +
+  '(versão de software, preço, norma vigente, disponibilidade), avise que o usuário deve confirmar na fonte oficial do fabricante.';
 
 /**
  * Cria a estrutura de conteúdos esperada pelo Gemini
@@ -13,22 +29,12 @@ function buildGeminiContents(messages) {
 }
 
 /**
- * Executa a chamada com streaming à API do Gemini.
- * Trata Grounding com busca no Google e inclui fallback caso a busca atinja cotas.
+ * Monta o corpo da requisição (com ou sem busca na web)
  */
-export async function streamGeminiChat({ messages, systemInstruction, env }) {
-  const apiKey = env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('Chave de API do Gemini (GEMINI_API_KEY) não configurada.');
-  }
-
-  // Modelo padrão fixado em gemini-2.5-flash
-  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
-
-  const basePayload = {
+function buildPayload({ messages, systemInstruction, withSearch }) {
+  const payload = {
     systemInstruction: {
-      parts: [{ text: systemInstruction }]
+      parts: [{ text: withSearch ? systemInstruction : systemInstruction + NOTA_SEM_BUSCA }]
     },
     contents: buildGeminiContents(messages),
     generationConfig: {
@@ -36,59 +42,108 @@ export async function streamGeminiChat({ messages, systemInstruction, env }) {
       maxOutputTokens: 2048
     }
   };
+  if (withSearch) {
+    payload.tools = [{ google_search: {} }];
+  }
+  return payload;
+}
 
-  // Tenta primeira chamada com busca na web (Grounding) habilitada
-  let response;
-  let searchFailed = false;
+/**
+ * Converte o último status de erro em mensagem amigável.
+ */
+function mensagemDeErro(status, configError) {
+  if (configError) {
+    return 'Houve um problema de configuração do serviço de IA. Avise o suporte da Treinar Serviços.';
+  }
+  if (status === 0) {
+    return 'Não foi possível conectar ao serviço de inteligência artificial. Tente novamente em instantes.';
+  }
+  if (status === 429) {
+    return 'Estou com muitas conversas agora. Tente novamente em alguns instantes.';
+  }
+  if (status === 404) {
+    return 'O modelo de IA não está disponível no momento. Avise o suporte da Treinar Serviços.';
+  }
+  if (status >= 500) {
+    return 'O serviço de IA está sobrecarregado neste momento. Tente novamente em alguns segundos.';
+  }
+  return 'Não foi possível processar sua solicitação no momento. Tente novamente.';
+}
 
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ...basePayload,
-        tools: [{ google_search: {} }]
-      })
-    });
-
-    // Se falhar com erro 400 ou 403 especificamente na ferramenta de busca, tenta sem busca
-    if (!response.ok && (response.status === 400 || response.status === 403)) {
-      const errText = await response.text();
-      // Não registrar dados do usuário, apenas sinalizar tentativa de recuperação
-      console.warn('Aviso: Falha ao invocar busca web no Gemini. Tentando sem ferramentas:', response.status);
-      searchFailed = true;
-
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(basePayload)
-      });
-    }
-  } catch (err) {
-    console.error('Erro de conexão com o Gemini:', err);
-    throw new Error('Não foi possível conectar ao serviço de inteligência artificial. Tente novamente em instantes.');
+/**
+ * Executa a chamada com streaming à API do Gemini.
+ * - Tenta o modelo principal e, se ele falhar, os modelos reserva em ordem.
+ * - A busca na web só é usada se ENABLE_SEARCH=true; se ela falhar, tenta sem busca.
+ */
+export async function streamGeminiChat({ messages, systemInstruction, env }) {
+  const apiKey = env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('Houve um problema de configuração do serviço de IA. Avise o suporte da Treinar Serviços.');
   }
 
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error('Estou com muitas conversas agora. Tente novamente em alguns instantes.');
+  const principal = (env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
+  const reservas = (env.GEMINI_FALLBACK_MODELS || MODELOS_RESERVA_PADRAO)
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  const modelos = [principal, ...reservas.filter(m => m !== principal)];
+
+  const buscaLigada = String(env.ENABLE_SEARCH || 'false').toLowerCase() === 'true';
+
+  let ultimoStatus = 0;
+  let erroDeConfiguracao = false;
+
+  for (const model of modelos) {
+    if (erroDeConfiguracao) break;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+    const tentativas = buscaLigada ? [true, false] : [false];
+    let buscaFalhou = false;
+
+    for (const comBusca of tentativas) {
+      let response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify(buildPayload({ messages, systemInstruction, withSearch: comBusca }))
+        });
+      } catch (err) {
+        // Falha de rede: registra (sem dados do usuário) e passa para o próximo modelo
+        console.error('Erro de conexão com o Gemini no modelo:', model);
+        ultimoStatus = 0;
+        break;
+      }
+
+      if (response.ok && response.body) {
+        return {
+          rawStream: response.body,
+          searchFailed: buscaLigada && buscaFalhou
+        };
+      }
+
+      ultimoStatus = response.status;
+      console.warn(`Gemini: modelo ${model} (busca=${comBusca}) respondeu ${response.status}`);
+      try { await response.text(); } catch { /* ignora */ }
+
+      // Se a busca falhou, tenta o mesmo modelo sem busca
+      if (comBusca) {
+        buscaFalhou = true;
+        continue;
+      }
+
+      // Sem busca e erro de chave/permissão/requisição: trocar de modelo não resolve
+      if (response.status === 400 || response.status === 401 || response.status === 403) {
+        erroDeConfiguracao = true;
+      }
+      break; // próximo modelo
     }
-    if (response.status >= 500) {
-      throw new Error('O serviço de IA está temporariamente indisponível. Tente novamente em breve.');
-    }
-    throw new Error('Não foi possível processar sua solicitação no momento. Tente novamente.');
   }
 
-  if (!response.body) {
-    throw new Error('Resposta vazia recebida do serviço de IA.');
-  }
-
-  return {
-    rawStream: response.body,
-    searchFailed
-  };
+  throw new Error(mensagemDeErro(ultimoStatus, erroDeConfiguracao));
 }
 
 /**
