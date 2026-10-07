@@ -19,6 +19,6 @@
   "author": "Treinar Serviços",
   "license": "MIT",
   "devDependencies": {
-    "wrangler": "^3.114.0"
+    "wrangler": "^4.148.0"
   }
 }

@@ -10,5 +10,5 @@ export const KNOWLEDGE_METADATA = {
   fileCount: 1,
   totalChars: 29190,
   estimatedTokens: 8340,
-  generatedAt: "2026-10-07T13:30:29.633Z"
+  generatedAt: "2026-10-07T14:12:43.518Z"
 };
