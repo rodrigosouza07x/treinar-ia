@@ -8,5 +8,5 @@ pages_build_output_dir = "public"
 # Para conectar o namespace KV em produção ou testes locais com KV:
 # [[kv_namespaces]]
 # binding = "CHAT_LIMITS_KV"
-# id = "SEU_KV_NAMESPACE_ID"
+# id = "3f635a01669d491bbb8ee233aa207ce0"
 # preview_id = "SEU_KV_PREVIEW_NAMESPACE_ID"
