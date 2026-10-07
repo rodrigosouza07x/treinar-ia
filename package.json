@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node scripts/build-knowledge.js && wrangler pages dev public",
     "build": "node scripts/build-knowledge.js",
-    "build:knowledge": "node scripts/build-knowledge.js"
+    "build:knowledge": "node scripts/build-knowledge.js",
+    "test": "node scripts/test-verification.js"
   },
   "keywords": [
     "automacao-industrial",

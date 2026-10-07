@@ -38,7 +38,16 @@ function getKvAdapter(env) {
     return {
       isKv: true,
       async get(key) {
-        return await kv.get(key, { type: 'json' });
+        const res = await kv.get(key, { type: 'json' });
+        if (!res) return null;
+        if (typeof res === 'string') {
+          try {
+            return JSON.parse(res);
+          } catch {
+            return null;
+          }
+        }
+        return res;
       },
       async put(key, value, ttlSeconds = 172800) {
         await kv.put(key, JSON.stringify(value), { expirationTtl: ttlSeconds });
