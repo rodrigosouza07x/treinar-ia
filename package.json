@@ -1,0 +1,23 @@
+{
+  "name": "treinar-ia-especialista-automacao",
+  "version": "1.0.0",
+  "description": "Especialista em Projetos de Automação Industrial - Treinar Serviços",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/build-knowledge.js && wrangler pages dev public",
+    "build": "node scripts/build-knowledge.js",
+    "build:knowledge": "node scripts/build-knowledge.js"
+  },
+  "keywords": [
+    "automacao-industrial",
+    "clp",
+    "ihm",
+    "gemini",
+    "cloudflare-pages"
+  ],
+  "author": "Treinar Serviços",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.114.0"
+  }
+}

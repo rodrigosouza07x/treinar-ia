@@ -1,0 +1,13 @@
+# Dependências
+node_modules/
+
+# Cloudflare e variáveis locais com segredos
+.dev.vars
+.wrangler/
+
+# Arquivo com chave secreta do usuário (NUNCA comitar)
+minha-chave.txt
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db

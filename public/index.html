@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Especialista em Projetos de Automação Industrial | Treinar Serviços</title>
+  
+  <!-- Meta tags essenciais -->
+  <meta name="description" content="Assistente de IA da Treinar Serviços para planejamento de projetos de automação industrial, CLP, IHM e estimativa de custos.">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Bibliotecas externas via CDN (Zero build no frontend) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Cabeçalho -->
+    <header class="app-header" role="banner">
+      <div class="header-container">
+        <div class="brand">
+          <img 
+            src="https://treinarservicos.com.br/wp-content/uploads/2025/05/ImagemLogoIcone01-1.webp" 
+            alt="Logo Treinar Serviços" 
+            class="brand-logo"
+            width="40"
+            height="40"
+            loading="eager"
+            onerror="this.style.display='none'"
+          >
+          <div class="brand-info">
+            <h1 class="brand-title">Treinar Serviços</h1>
+            <span class="brand-subtitle">Especialista em Projetos de Automação</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-export" class="btn btn-secondary" type="button" title="Baixar histórico da conversa em arquivo Markdown">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span class="btn-text">Exportar</span>
+          </button>
+          <button id="btn-new-chat" class="btn btn-danger-outline" type="button" title="Iniciar uma nova conversa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M3 21v-5h5"></path>
+            </svg>
+            <span class="btn-text">Nova conversa</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Área principal do chat -->
+    <main class="chat-main" role="main">
+      <div 
+        id="chat-messages" 
+        class="chat-messages" 
+        role="log" 
+        aria-live="polite" 
+        aria-label="Mensagens da conversa"
+      >
+        <!-- Mensagem inicial de boas-vindas -->
+        <article class="message message-assistant" id="welcome-message">
+          <div class="message-avatar" aria-hidden="true">IA</div>
+          <div class="message-content">
+            <div class="message-body">
+              <p>Olá! Sou o <strong>Especialista em Projetos de Automação Industrial</strong> da Treinar Serviços.</p>
+              <p>Estou aqui para ajudar você a planejar seu projeto de automação do início ao fim: definir lista de entradas e saídas (E/S), estruturar lógica de CLP, dimensionar componentes e estimar custos com segurança técnica (NR-10 e NR-12).</p>
+              <p>Para começarmos, descreva a máquina ou o processo que você quer automatizar ou selecione uma opção abaixo:</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Bloco de chips de início rápido -->
+        <section id="starter-chips" class="starter-chips-container" aria-label="Para começar a conversa">
+          <div class="chips-label">Para começar a conversa:</div>
+          <div class="chips-grid">
+            <button class="chip-btn" type="button" data-prompt="Olá! hoje eu quero automatizar uma máquina e um processo">
+              Olá! hoje eu quero automatizar uma máquina e um processo
+            </button>
+            <button class="chip-btn" type="button" data-prompt="Quero ajuda para planejar meu projeto de automação industrial, me diga o que preciso.">
+              Quero ajuda para planejar meu projeto de automação industrial, me diga o que preciso.
+            </button>
+            <button class="chip-btn" type="button" data-prompt="Vamos estruturar juntos a lógica do meu CLP e calcular o custo do meu projeto?">
+              Vamos estruturar juntos a lógica do meu CLP e calcular o custo do meu projeto?
+            </button>
+            <button class="chip-btn" type="button" data-prompt="Me fale sobre meu equipamento e me ajude a definir entradas, saídas e lógica para o controle.">
+              Me fale sobre meu equipamento e me ajude a definir entradas, saídas e lógica para o controle.
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Barra de entrada de texto fixa -->
+    <footer class="chat-footer-wrapper">
+      <div class="chat-input-container">
+        <!-- Campo Honeypot para despistar bots -->
+        <input type="text" id="hp-input" name="website_hp" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <form id="chat-form" class="chat-form" autocomplete="off">
+          <div class="input-wrapper">
+            <label for="chat-textarea" class="visually-hidden">Mensagem para o assistente de automação</label>
+            <textarea 
+              id="chat-textarea" 
+              name="message" 
+              rows="1" 
+              placeholder="Descreva sua máquina, processo ou dúvida técnica..." 
+              maxlength="2000"
+              aria-describedby="char-counter"
+              required
+            ></textarea>
+            
+            <div class="input-bottom-row">
+              <span id="char-counter" class="char-counter" aria-live="polite">0 / 2000</span>
+              <div class="input-actions">
+                <button id="btn-stop" class="btn btn-stop" type="button" style="display:none" aria-label="Parar resposta da IA">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                  </svg>
+                  <span>Parar</span>
+                </button>
+                <button id="btn-send" class="btn btn-primary" type="submit" aria-label="Enviar mensagem">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  <span class="btn-send-text">Enviar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Informações legais e de contato -->
+        <div class="disclaimer-container">
+          <p class="disclaimer-text">
+            Este assistente usa IA e pode errar. Confirme parâmetros e ligações no manual do fabricante e siga as normas de segurança (NR-10 e NR-12). Não envie dados pessoais nem informações confidenciais da sua empresa.
+            <a href="https://treinarservicos.com.br/politica-de-privacidade/" target="_blank" rel="noopener noreferrer" class="footer-link">Política de Privacidade</a>.
+          </p>
+          <div class="whatsapp-support">
+            <a 
+              href="https://api.whatsapp.com/send/?phone=5531984617428&text=Ol%C3%A1%2C+gostaria+de+tirar+uma+d%C3%BAvida" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="whatsapp-link"
+              title="Fale conosco no WhatsApp"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.41a8.196 8.196 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.45 0-2.88-.38-4.13-1.12l-.3-.18-3.07.8 0.82-2.99-.2-.31a8.214 8.214 0 0 1-1.26-4.44c0-4.54 3.7-8.24 8.24-8.24m4.52 11.64c-.25-.13-1.47-.72-1.7-.8-.23-.08-.39-.12-.56.12-.17.25-.64.8-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.4-1.75-.15-.25-.02-.38.11-.51.11-.11.25-.29.38-.44.12-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+              </svg>
+              <span>Suporte &amp; Cursos no WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal de confirmação: Nova conversa -->
+  <dialog id="modal-new-chat" class="modal">
+    <div class="modal-box">
+      <h2 class="modal-title">Iniciar nova conversa?</h2>
+      <p class="modal-desc">Todo o histórico da conversa atual será apagado desta janela. Se desejar guardar as informações, use primeiro o botão "Exportar".</p>
+      <div class="modal-actions">
+        <button id="modal-btn-cancel" class="btn btn-secondary" type="button">Cancelar</button>
+        <button id="modal-btn-confirm" class="btn btn-danger" type="button">Sim, limpar conversa</button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
