@@ -2,11 +2,13 @@ name = "treinar-ia"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "public"
 
-# ==============================================================================
-# BINDING DO CLOUDFLARE KV (Rate Limit Anti-Abuso)
-# ==============================================================================
-# Para conectar o namespace KV em produção ou testes locais com KV:
-# [[kv_namespaces]]
-# binding = "CHAT_LIMITS_KV"
-# id = "3f635a01669d491bbb8ee233aa207ce0"
-# preview_id = "SEU_KV_PREVIEW_NAMESPACE_ID"
+[vars]
+GEMINI_MODEL = "gemini-3.8-flash"
+LIMIT_PER_HOUR = "20"
+LIMIT_PER_DAY = "50"
+LIMIT_GLOBAL_DAILY = "400"
+DISABLE_PROTECTIONS = "false"
+
+[[kv_namespaces]]
+binding = "CHAT_LIMITS_KV"
+id = "3f635a01669d491bbb8ee233aa207ce0"
