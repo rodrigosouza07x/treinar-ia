@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Entrar | Especialista em Automação | Treinar Serviços</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #000;
+      color: #f2f2f2;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    main { width: 100%; max-width: 420px; }
+    .logo { display: block; width: 72px; height: 72px; margin: 0 auto 18px; object-fit: contain; }
+    h1 { font-size: 1.35rem; line-height: 1.3; text-align: center; margin: 0 0 8px; }
+    p.sub { text-align: center; color: #b5b5b5; font-size: .95rem; line-height: 1.5; margin: 0 0 22px; }
+    label { display: block; font-size: .9rem; margin-bottom: 6px; color: #d8d8d8; }
+    input[type="email"] {
+      width: 100%; padding: 14px; font-size: 1rem; color: #fff;
+      background: #141414; border: 1px solid #3a3a3a; border-radius: 10px;
+    }
+    input[type="email"]:focus-visible, button:focus-visible, a:focus-visible {
+      outline: 3px solid #4da3ff; outline-offset: 2px;
+    }
+    button {
+      width: 100%; margin-top: 14px; padding: 14px; font-size: 1rem; font-weight: 600;
+      color: #000; background: #ffffff; border: 0; border-radius: 10px; cursor: pointer;
+    }
+    button[disabled] { opacity: .6; cursor: wait; }
+    #mensagem { min-height: 1.4em; margin-top: 14px; font-size: .92rem; line-height: 1.45; color: #ff8a80; text-align: center; }
+    .rodape { margin-top: 26px; text-align: center; font-size: .8rem; color: #8f8f8f; line-height: 1.5; }
+    .rodape a { color: #b5b5b5; }
+    .armadilha { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="logo" src="https://treinarservicos.com.br/wp-content/uploads/2025/05/ImagemLogoIcone01-1.webp" alt="Treinar Serviços">
+    <h1>Especialista em Projetos de Automação Industrial</h1>
+    <p class="sub">Digite o e-mail que você usa na área de alunos da Treinar Serviços para entrar.</p>
+
+    <form id="formulario" novalidate>
+      <label for="email">Seu e-mail</label>
+      <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@exemplo.com" required>
+      <div class="armadilha" aria-hidden="true">
+        <label for="website">Não preencha este campo</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <button id="botao" type="submit">Entrar</button>
+      <div id="mensagem" role="alert" aria-live="polite"></div>
+    </form>
+
+    <div class="rodape">
+      Usamos seu e-mail apenas para conferir o cadastro. Não guardamos o e-mail.<br>
+      Problemas para entrar? <a href="https://api.whatsapp.com/send/?phone=5531984617428&text=Ol%C3%A1%2C+n%C3%A3o+consigo+acessar+a+IA+de+automa%C3%A7%C3%A3o" target="_blank" rel="noopener">Fale no WhatsApp</a>.<br>
+      <a href="https://treinarservicos.com.br/politica-de-privacidade/" target="_blank" rel="noopener">Política de privacidade</a>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById('formulario');
+      var campo = document.getElementById('email');
+      var armadilha = document.getElementById('website');
+      var botao = document.getElementById('botao');
+      var mensagem = document.getElementById('mensagem');
+
+      form.addEventListener('submit', async function (evento) {
+        evento.preventDefault();
+        mensagem.textContent = '';
+        var email = campo.value.trim();
+        if (!email) { mensagem.textContent = 'Digite seu e-mail.'; campo.focus(); return; }
+
+        botao.disabled = true;
+        botao.textContent = 'Verificando...';
+
+        try {
+          var resposta = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, website: armadilha.value }),
+            credentials: 'same-origin'
+          });
+          var dados = {};
+          try { dados = await resposta.json(); } catch (e) {}
+
+          if (resposta.ok && dados.ok) {
+            window.location.replace('/');
+            return;
+          }
+          mensagem.textContent = dados.message || 'Não foi possível entrar agora. Tente novamente.';
+        } catch (erro) {
+          mensagem.textContent = 'Sem conexão. Verifique sua internet e tente de novo.';
+        }
+
+        botao.disabled = false;
+        botao.textContent = 'Entrar';
+      });
+    })();
+  </script>
+</body>
+</html>
