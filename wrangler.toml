@@ -8,6 +8,7 @@ LIMIT_PER_HOUR = "20"
 LIMIT_PER_DAY = "50"
 LIMIT_GLOBAL_DAILY = "400"
 DISABLE_PROTECTIONS = "false"
+REQUIRE_LOGIN = "true"
 
 [[kv_namespaces]]
 binding = "CHAT_LIMITS_KV"
